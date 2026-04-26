@@ -30,20 +30,50 @@ mkdir -p "$PROJECT_DIR/logs"
 cd "$PROJECT_DIR"
 "$PYTHON_BIN" "$PROJECT_DIR/main.py"
 
-if command -v curl >/dev/null 2>&1 && curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
+dashboard_is_healthy() {
+  command -v curl >/dev/null 2>&1 && curl --max-time 3 -fsS "$HEALTH_URL" >/dev/null 2>&1
+}
+
+stop_stale_dashboard() {
+  local pids
+  pids="$(pgrep -f "streamlit run .*walking_dashboard.py" || true)"
+  if [[ -n "$pids" ]]; then
+    echo "Stopping stale dashboard process: $pids"
+    kill $pids || true
+    sleep 2
+
+    pids="$(pgrep -f "streamlit run .*walking_dashboard.py" || true)"
+    if [[ -n "$pids" ]]; then
+      echo "Force-stopping stale dashboard process: $pids"
+      kill -9 $pids || true
+      sleep 1
+    fi
+  fi
+}
+
+if dashboard_is_healthy; then
   echo "Dashboard already running at $DASHBOARD_URL"
 else
+  stop_stale_dashboard
   nohup "$STREAMLIT_BIN" run "$PROJECT_DIR/walking_dashboard.py" \
     --server.port "$DASHBOARD_PORT" \
     --server.headless true \
     --browser.gatherUsageStats false \
-    > "$PROJECT_DIR/logs/dashboard.log" 2>&1 &
+    > "$PROJECT_DIR/logs/dashboard.log" 2>&1 < /dev/null &
+  dashboard_pid=$!
+  disown "$dashboard_pid" 2>/dev/null || true
   echo "Started dashboard at $DASHBOARD_URL"
-  sleep 2
+  sleep 4
+
+  if ! dashboard_is_healthy; then
+    echo "Dashboard did not become healthy. Check $PROJECT_DIR/logs/dashboard.log" >&2
+    exit 1
+  fi
 fi
 
 if command -v open >/dev/null 2>&1; then
-  open "$DASHBOARD_URL"
+  echo "Opening dashboard in browser: $DASHBOARD_URL"
+  open "$DASHBOARD_URL" || echo "Could not open browser automatically. Open $DASHBOARD_URL manually."
 else
   echo "Open dashboard: $DASHBOARD_URL"
 fi
