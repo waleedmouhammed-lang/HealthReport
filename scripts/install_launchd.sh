@@ -3,15 +3,7 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLIST_PATH="$HOME/Library/LaunchAgents/com.healthreport.strava-sync.plist"
-PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
-
-if [[ -x "$PROJECT_DIR/.venv/bin/python3" ]]; then
-  PYTHON_BIN="$PROJECT_DIR/.venv/bin/python3"
-elif [[ -x "$PROJECT_DIR/.venv-macbook/bin/python3" ]]; then
-  PYTHON_BIN="$PROJECT_DIR/.venv-macbook/bin/python3"
-elif [[ ! -x "$PYTHON_BIN" ]]; then
-  PYTHON_BIN="$(command -v python3)"
-fi
+RUNNER="$PROJECT_DIR/scripts/sync_then_dashboard.sh"
 
 mkdir -p "$HOME/Library/LaunchAgents"
 mkdir -p "$PROJECT_DIR/logs"
@@ -27,8 +19,7 @@ cat > "$PLIST_PATH" <<PLIST
 
   <key>ProgramArguments</key>
   <array>
-    <string>$PYTHON_BIN</string>
-    <string>$PROJECT_DIR/main.py</string>
+    <string>$RUNNER</string>
   </array>
 
   <key>WorkingDirectory</key>
@@ -59,4 +50,4 @@ launchctl load "$PLIST_PATH"
 
 echo "Installed daily Strava sync LaunchAgent:"
 echo "$PLIST_PATH"
-echo "It will run at 10:00 AM local time."
+echo "It will sync data and open the dashboard at 10:00 AM local time."

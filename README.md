@@ -47,6 +47,22 @@ The sync overwrites:
 
 New rows are merged with the existing export by `Activity ID`.
 
+## Manual Sync and Dashboard
+
+Run:
+
+```bash
+scripts/sync_then_dashboard.sh
+```
+
+This syncs Strava first, then starts or opens the Streamlit dashboard at:
+
+```text
+http://localhost:8501
+```
+
+The dashboard auto-loads `output/strava_activities.csv`. The sidebar upload is only an optional override.
+
 ## Daily 10 AM Sync on macOS
 
 Install the LaunchAgent:
@@ -55,4 +71,4 @@ Install the LaunchAgent:
 scripts/install_launchd.sh
 ```
 
-The scheduled run uses the same output files and state as manual runs, so there are no duplicate report files.
+The scheduled run uses the same output files and state as manual runs, then opens the dashboard after a successful sync.

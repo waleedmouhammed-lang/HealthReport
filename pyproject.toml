@@ -11,8 +11,10 @@ requires-python = ">=3.10"
 dependencies = [
     "openpyxl>=3.1.2",
     "pandas>=2.2.0",
+    "plotly>=5.20.0",
     "python-dotenv>=1.0.1",
     "requests>=2.31.0",
+    "streamlit>=1.33.0",
 ]
 
 [project.scripts]
@@ -20,4 +22,13 @@ healthreport-sync = "main:main"
 healthreport-strava-tokens = "tokens:main"
 
 [tool.setuptools]
-py-modules = ["auth", "config", "export", "fetch", "main", "tokens", "transform"]
+py-modules = [
+    "auth",
+    "config",
+    "export",
+    "fetch",
+    "main",
+    "tokens",
+    "transform",
+    "walking_dashboard",
+]
