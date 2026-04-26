@@ -7,3 +7,6 @@ tokens.json
 __pycache__
 *.csv
 *.xlsx
+.venv-macbook
+.DS_Store
+

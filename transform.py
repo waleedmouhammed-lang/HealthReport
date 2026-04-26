@@ -1,4 +1,8 @@
+import logging
+
 import pandas as pd
+
+log = logging.getLogger(__name__)
 
 TARGET_COLUMNS = {
     "id":                   "Activity ID",
@@ -17,8 +21,12 @@ TARGET_COLUMNS = {
     "kudos_count":          "Kudos Count",
 }
 
+
 def transform_activities(raw):
     """Transform raw Strava JSON into a clean analysis-ready DataFrame"""
+    if not raw:
+        return pd.DataFrame(columns=TARGET_COLUMNS.values())
+
     df = pd.json_normalize(raw)
 
     # Keep only columns that exist in this dataset
@@ -26,15 +34,22 @@ def transform_activities(raw):
     df = df[list(available.keys())].rename(columns=available)
 
     # Unit conversions
-    df["Distance (km)"]      = (df["Distance (km)"] / 1000).round(2)
-    df["Duration (min)"]     = (df["Duration (min)"] / 60).round(2)
-    df["Elapsed Time (min)"] = (df["Elapsed Time (min)"] / 60).round(2)
+    if "Distance (km)" in df.columns:
+        df["Distance (km)"] = (df["Distance (km)"] / 1000).round(2)
+    if "Duration (min)" in df.columns:
+        df["Duration (min)"] = (df["Duration (min)"] / 60).round(2)
+    if "Elapsed Time (min)" in df.columns:
+        df["Elapsed Time (min)"] = (df["Elapsed Time (min)"] / 60).round(2)
 
     # Pace: convert speed (m/s) to min/km
-    df["Avg Pace (min/km)"] = (1000 / df["Avg Pace (min/km)"] / 60).round(2)
+    if "Avg Pace (min/km)" in df.columns:
+        speed = pd.to_numeric(df["Avg Pace (min/km)"], errors="coerce")
+        pace = (1000 / speed.where(speed > 0) / 60).round(2)
+        df["Avg Pace (min/km)"] = pace.fillna(0)
 
     # Parse date
-    df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%Y-%m-%d")
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%Y-%m-%d")
 
     # Fill missing values
     for col in ["Avg Heart Rate", "Max Heart Rate", "Calories", "Avg Cadence"]:
@@ -42,7 +57,12 @@ def transform_activities(raw):
             df[col] = df[col].fillna(0).astype(int)
 
     # Sort newest first
-    df = df.sort_values("Date", ascending=False).reset_index(drop=True)
+    if "Date" in df.columns:
+        df = df.sort_values("Date", ascending=False).reset_index(drop=True)
 
-    print(f"[transform] Transformed {len(df)} activities into {len(df.columns)} columns.")
+    log.info(
+        "[transform] Transformed %s activities into %s columns.",
+        len(df),
+        len(df.columns),
+    )
     return df
