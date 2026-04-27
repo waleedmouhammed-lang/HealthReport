@@ -13,6 +13,13 @@ load_dotenv(ENV_FILE)
 
 
 def required_env(name):
+    """
+        Helper function to get required environment variables,
+        raising an error if missing.
+        When I need to get an environment variable,
+        I call this function to ensure that the python script fails
+        with clear error message if the variable is not set.
+    """
     value = os.getenv(name)
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
@@ -25,8 +32,10 @@ def build_auth_url():
         "redirect_uri": required_env("STRAVA_REDIRECT_URI"),
         "response_type": "code",
         "approval_prompt": "auto",
+        # The scope is stored in the .env file but default to "read,activity:read_all" if not set.
         "scope": os.getenv("STRAVA_SCOPE", "read,activity:read_all"),
     }
+    # This replicates the manual step we did using the authorization URL in the browser.
     return f"{STRAVA_AUTHORIZE_URL}?{urlencode(params)}"
 
 
@@ -42,6 +51,7 @@ def exchange_code(code):
         raise RuntimeError(f"Token exchange failed: {response.text}")
 
     tokens = response.json()
+    # Save the tokens to the local tokens.json file for use by other scripts.
     with open(TOKENS_FILE, "w") as f:
         json.dump(tokens, f, indent=2)
 
@@ -49,6 +59,18 @@ def exchange_code(code):
 
 
 def main():
+    """
+        This script serves two main purposes:
+        1. Generate the Strava authorization URL that the user can visit to authorize
+          the app and obtain an authorization code.
+        2. Exchange the obtained authorization code for access and refresh tokens,
+        which are then saved to a local tokens.json file for use by other scripts in the project.
+        --------------------------
+        First, the user runs this script with the "auth-url" command to get the authorization URL.
+        They visit that URL, authorize the app, and receive an authorization code from Strava.
+        Then, they run this script again with the "exchange" command, providing the authorization code
+        as an argument. The script exchanges the code for tokens and saves them locally.
+    """
     parser = argparse.ArgumentParser(
         description="Create or refresh the local Strava tokens.json file."
     )
