@@ -46,10 +46,12 @@ def get_valid_token():
     """Return a valid access token, refreshing it if expired"""
     tokens = load_tokens()
 
-    # Check if token is expired (with 60s buffer)
-    if time.time() >= tokens["expires_at"] - 60:
+    # Check if token is expired (with 120s buffer)
+    if time.time() >= tokens["expires_at"] - 120:
         log.info("[auth] Access token expired. Refreshing...")
 
+        # Make a POST request to the STRAVA_TOKEN_URL with the required parameters to refresh the token.
+        # This in case of access token expiration.
         response = requests.post(STRAVA_TOKEN_URL, data={
             "client_id":     get_required_env("STRAVA_CLIENT_ID"),
             "client_secret": get_required_env("STRAVA_CLIENT_SECRET"),

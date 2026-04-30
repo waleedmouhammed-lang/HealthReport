@@ -1,6 +1,8 @@
 import time
 import logging
 import requests
+
+# Importing from the already existing scripts we made.
 from auth import get_valid_token
 from config import STRAVA_API_BASE_URL
 
@@ -11,6 +13,8 @@ log = logging.getLogger(__name__)
 
 def fetch_all_activities(after_epoch=None):
     """Fetch Strava activities with pagination, optionally after a Unix timestamp."""
+
+    # This is the access token coming from the auth.py script.
     token      = get_valid_token()
     headers    = {"Authorization": f"Bearer {token}"}
     activities = []
