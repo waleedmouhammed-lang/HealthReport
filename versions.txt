@@ -1,0 +1,12 @@
+1. The second version of this application should be through
+downloading the detailed activities from Strava and store
+them into the sql database we created. This should expand
+the database itself to include all the new data will
+that will be downloaded.
+2. The third version of this application should be through
+building the dashboard to show more insights and numbers about
+the single performance of the user. Here, we are talking about the single
+performance of the user.
+3. The third version should be through leveraging local
+LLM to show some actions personalized for the user according to 
+its actual numbers.
