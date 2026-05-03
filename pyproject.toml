@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "healthreport-strava-sync"
-version = "0.1.0"
-description = "Sync Strava activities into local CSV and Excel reports."
+version = "0.2.0"
+description = "Sync Strava activities into local SQLite storage, CSV/XLSX reports, and a Streamlit dashboard."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -17,11 +17,17 @@ dependencies = [
     "streamlit>=1.33.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
 [project.scripts]
-healthreport-sync = "main:main"
-healthreport-strava-tokens = "tokens:main"
+healthreport-sync = "healthreport.cli:main"
+healthreport-strava-tokens = "healthreport.tokens_cli:main"
 
 [tool.setuptools]
+packages = ["healthreport"]
 py-modules = [
     "auth",
     "config",

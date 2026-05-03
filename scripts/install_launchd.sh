@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLIST_PATH="$HOME/Library/LaunchAgents/com.healthreport.strava-sync.plist"
-RUNNER="$PROJECT_DIR/scripts/sync_then_dashboard.sh"
+RUNNER="$PROJECT_DIR/scripts/sync_only.sh"
 
 mkdir -p "$HOME/Library/LaunchAgents"
 mkdir -p "$PROJECT_DIR/logs"
@@ -28,7 +28,7 @@ cat > "$PLIST_PATH" <<PLIST
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>
-    <integer>10</integer>
+    <integer>11</integer>
     <key>Minute</key>
     <integer>0</integer>
   </dict>
@@ -45,9 +45,11 @@ cat > "$PLIST_PATH" <<PLIST
 </plist>
 PLIST
 
+chmod +x "$RUNNER"
 launchctl unload "$PLIST_PATH" >/dev/null 2>&1 || true
 launchctl load "$PLIST_PATH"
 
 echo "Installed daily Strava sync LaunchAgent:"
 echo "$PLIST_PATH"
-echo "It will sync data and open the dashboard at 10:00 AM local time."
+echo "It will sync data at 11:00 AM local time."
+echo "It will not open or restart the Streamlit dashboard."

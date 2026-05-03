@@ -1,69 +1,58 @@
-# HealthReport Strava Sync
+# HealthReport Strava App
 
-Sync Strava activities into local CSV and Excel reports.
+Sync Strava activities into local SQLite storage, export CSV/XLSX reports, and inspect walking metrics in a Streamlit UI.
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env
+```
 
-   ```bash
-   python3 -m venv .venv
-   .venv/bin/pip install -r requirements.txt
-   ```
+Fill `.env` with your Strava app values.
 
-2. Copy `.env.example` to `.env` and fill in your Strava app values:
+## First Strava Authorization
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+.venv/bin/python tokens.py auth-url
+.venv/bin/python tokens.py exchange YOUR_CODE
+```
 
-3. Generate a Strava authorization URL:
+This writes `tokens.json`, which is local runtime state and ignored by git.
 
-   ```bash
-   .venv/bin/python tokens.py auth-url
-   ```
+## Run the App UI
 
-4. Open the printed URL, authorize the app, then exchange the returned `code`:
+```bash
+scripts/run_dashboard.sh
+```
 
-   ```bash
-   .venv/bin/python tokens.py exchange YOUR_CODE
-   ```
+The Streamlit UI lets you:
 
-This writes `tokens.json`, which is ignored by git.
+- Run `Sync Now` without manually running Python scripts.
+- Refresh dashboard data.
+- Export `output/strava_activities.csv` and `output/strava_activities.xlsx`.
+- Upload a temporary CSV override for inspection.
 
-## Manual Sync
+## Manual CLI Sync
 
-Run:
+The UI is the normal way to run the app, but the CLI remains available:
 
 ```bash
 .venv/bin/python main.py
+.venv/bin/python main.py --full-refresh
+.venv/bin/python main.py --no-export
 ```
 
-The sync overwrites:
-
-- `output/strava_activities.csv`
-- `output/strava_activities.xlsx`
-- `state.json`
-
-New rows are merged with the existing export by `Activity ID`.
-
-## Manual Sync and Dashboard
-
-Run:
+Package entrypoints are also available after installation:
 
 ```bash
-scripts/sync_then_dashboard.sh
+healthreport-sync
+healthreport-strava-tokens auth-url
+healthreport-strava-tokens exchange YOUR_CODE
 ```
 
-This syncs Strava first, then starts or opens the Streamlit dashboard at:
-
-```text
-http://localhost:8501
-```
-
-The dashboard auto-loads `output/strava_activities.csv`. The sidebar upload is only an optional override.
-
-## Daily 10 AM Sync on macOS
+## Daily 11 AM Sync on macOS
 
 Install the LaunchAgent:
 
@@ -71,4 +60,42 @@ Install the LaunchAgent:
 scripts/install_launchd.sh
 ```
 
-The scheduled run uses the same output files and state as manual runs, then opens the dashboard after a successful sync.
+The scheduled job runs `scripts/sync_only.sh` at 11:00 AM local time. It only pulls Strava data, updates SQLite, and writes exports. It does not open the browser or start/restart Streamlit.
+
+To open the dashboard, run:
+
+```bash
+scripts/run_dashboard.sh
+```
+
+## Runtime Files
+
+By default, runtime data lives in the project directory:
+
+- `.env`
+- `tokens.json`
+- `state.json`
+- `healthreport.sqlite3`
+- `logs/`
+- `output/`
+
+Set `HEALTHREPORT_HOME=/path/to/data` to store runtime data elsewhere.
+
+## Python API
+
+The package-oriented API is available for future reuse:
+
+```python
+from healthreport import export_reports, load_activities, sync_activities
+
+sync_activities()
+df = load_activities()
+export_reports()
+```
+
+## Verification
+
+```bash
+python3 -m py_compile main.py tokens.py walking_dashboard.py healthreport/*.py
+pytest
+```
